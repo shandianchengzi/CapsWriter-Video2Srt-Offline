@@ -1,4 +1,7 @@
 import os
+import subprocess
+import struct
+import base64
 from flask import Flask, render_template, request, jsonify
 
 from util import hot_sub_en
@@ -87,6 +90,72 @@ def process_text():
     
     # 返回处理后的文本（此处暂返回原文本）
     return jsonify({'result': text})
+
+
+# --- 4. ffmpeg 音频提取接口 ---
+@app.route('/api/extract_audio', methods=['POST'])
+def extract_audio():
+    """用 ffmpeg 将上传的音视频文件转为 16kHz mono Float32 PCM，返回 base64"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    uploaded = request.files['file']
+    import tempfile
+    tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix='_' + uploaded.filename)
+    tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+    tmp_in.close()
+    tmp_out.close()
+
+    try:
+        uploaded.save(tmp_in.name)
+
+        ffmpeg_path = os.path.join(BASE_DIR, 'ffmpeg.exe')
+        if not os.path.exists(ffmpeg_path):
+            ffmpeg_path = 'ffmpeg'
+
+        cmd = [
+            ffmpeg_path, '-y', '-i', tmp_in.name,
+            '-vn',
+            '-acodec', 'pcm_f32le',
+            '-ar', '16000',
+            '-ac', '1',
+            '-f', 'wav',
+            tmp_out.name
+        ]
+        result = subprocess.run(cmd, capture_output=True, timeout=300)
+        if result.returncode != 0:
+            err_msg = result.stderr.decode('utf-8', errors='replace')[-500:]
+            return jsonify({'error': f'ffmpeg failed: {err_msg}'}), 500
+
+        with open(tmp_out.name, 'rb') as f:
+            wav_data = f.read()
+
+        data_pos = wav_data.find(b'data')
+        if data_pos < 0:
+            return jsonify({'error': 'Invalid WAV output'}), 500
+        data_size = struct.unpack('<I', wav_data[data_pos + 4:data_pos + 8])[0]
+        pcm_data = wav_data[data_pos + 8:data_pos + 8 + data_size]
+
+        import array
+        float32_arr = array.array('f')
+        float32_arr.frombytes(pcm_data)
+        valid_samples = [s for s in float32_arr if s == s]
+        clean_bytes = array.array('f', valid_samples).tobytes()
+        audio_b64 = base64.b64encode(clean_bytes).decode('ascii')
+
+        return jsonify({'audio': audio_b64})
+
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Conversion timeout'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        for p in (tmp_in.name, tmp_out.name):
+            try:
+                os.unlink(p)
+            except OSError:
+                pass
+
 
 def init_page():
     # 载入热词
