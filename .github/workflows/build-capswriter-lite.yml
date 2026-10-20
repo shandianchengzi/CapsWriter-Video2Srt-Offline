@@ -77,6 +77,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
           if (!(Test-Path dist/CapsWriterLite/CapsWriterLite.exe)) { throw "Voice engine missing" }
 
+      - name: Prepare 256px Windows installer icon
+        run: |
+          python -c "from PIL import Image; i=Image.open('assets/icon.ico').convert('RGBA').resize((256,256),Image.Resampling.LANCZOS); i.save('desktop/launcher/win-icon.ico', format='ICO', sizes=[(256,256),(128,128),(64,64),(32,32),(16,16)])"
+          python -c "from PIL import Image; i=Image.open('desktop/launcher/win-icon.ico'); assert (256,256) in i.ico.sizes(), 'Installer icon lacks 256x256'"
+
       - name: Build NSIS setup and differential metadata
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'

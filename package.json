@@ -41,7 +41,7 @@
       "target": [
         "nsis"
       ],
-      "icon": "assets/icon.ico"
+      "icon": "desktop/launcher/win-icon.ico"
     },
     "nsis": {
       "oneClick": false,
