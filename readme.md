@@ -1,14 +1,14 @@
-作者突然时隔两年猛猛更新了！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-加了我整了很久都没整明白的语速语音模型！
+# Windows 托盘语音输入新版（原版大模型常驻）
 
-此仓库正式弃用！！！
+新增 [CapsWriter Lite v0.2.0](desktop/README.md)：保留原版 Paraformer + CT-Transformer 大模型，支持后台常驻、开机预加载、热词纠错记忆、Quicker 图形配置，并通过 GitHub Actions 自动编译 Windows EXE。模型仅需下载一次，也能直接使用现有 models 文件夹。
 
-直接转作者的仓库吧！！
-https://github.com/HaujetZhao/CapsWriter-Offline
+**新版程序：** [Windows Release](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.2.0) · [详细使用说明](desktop/README.md)
 
-后续我会另外开一个仓库，去做基于 CapsWriter 的纯网页端识别，因为我感觉到了很多东西还是得靠网页去进行分发。
+以下为旧版客户端、服务端和字幕转录介绍，旧版功能仍然保留。
 
+---
 
+（以下内容为旧版说明）
 
 ## 介绍
 

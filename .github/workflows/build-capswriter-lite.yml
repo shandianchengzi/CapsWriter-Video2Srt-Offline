@@ -46,6 +46,9 @@ jobs:
             --name CapsWriterLite `
             --icon assets/icon.ico `
             --paths desktop `
+            --paths . `
+            --hidden-import util.chinese_itn `
+            --hidden-import util.format_tools `
             --collect-all sherpa_onnx `
             --collect-all funasr_onnx `
             --collect-all onnxruntime `

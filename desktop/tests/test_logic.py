@@ -42,7 +42,7 @@ class LogicTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             (root / "models" / "paraformer-offline-zh").mkdir(parents=True)
-            self.assertEqual(normalize_model_path(root), root / "models")
+            self.assertEqual(normalize_model_path(root), root.resolve() / "models")
 
 
 if __name__ == "__main__":
