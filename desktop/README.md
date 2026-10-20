@@ -12,9 +12,17 @@
 
 启动时后台初始化 Paraformer 和 CT-Transformer，**只初始化一次，并保持常驻内存**。关闭设置窗口不会结束程序；托盘「完全退出」才释放模型。Windows 重启后仍然需要初始化一次；ONNX Runtime 推理会话不能简单序列化到磁盘实现零耗时重启。可设置当前用户的开机自启动，由系统登录时后台预加载，日常按键直接使用。
 
+## 下载及安装
+
+Windows 10/11 x64 用户请到 [v0.3.0 Release](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.3.0) 直接下载并运行 `CapsWriter-Lite-0.3.0-x64-Setup.exe`。NSIS 安装程序可选择安装路径、创建桌面／开始菜单快捷方式、在 Windows 设置中卸载。无需手动解压或移动依赖文件。首次安装仍可选择原有模型文件夹。
+
+应用每次启动由轻量后台更新管理器启动 Python 语音托盘，托盘里的「检查软件更新」和设置页按钮都会触发更新检查。若发现新版，先尝试 `.blockmap` 差分下载，遇到差分失败自动下载完整安装包并支持断点续传；下载完征询你是立即重启安装还是下次退出时安装。模型、热词配置和日志均存放在 `%LOCALAPPDATA%\\CapsWriterLite`，不受安装目录更新影响。
+
+由于历史 v0.2.0 ZIP 版本无 NSIS 更新数据，首次迁移至 v0.3.0 必须完整安装。完成后才具备跨安装版差分更新条件。
+
 ## 操作说明
 
-1. 下载 [Windows Release v0.2.0](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.2.0) 中的 CapsWriterLite-v0.2.0-win64.zip，完整解压后启动 CapsWriterLite.exe。请保留 ZIP 内的整个应用文件夹（并非单 EXE 打包）。
+1. 下载 v0.3.0 Release 的 `CapsWriter-Lite-0.3.0-x64-Setup.exe` 并直接运行安装。
 2. 首次运行配置模型目录，等待托盘提示「已就绪」。
 3. 按住 CapsLock 说话，松开后识别并输入到当前程序。原版大模型常驻，关闭/再次打开设置不重复加载。
 4. 系统托盘菜单可打开设置、暂停输入、手工纠正上一次识别、打开日志、完全退出。
@@ -39,6 +47,6 @@ Windows 10/11 x64，Python 3.10，源码安装：
     python desktop/app.py
 
 GitHub Actions 工作流文件：.github/workflows/build-capswriter-lite.yml。
-仅打包程序和运行依赖，不把模型文件塞进 EXE；master 分支上 desktop/ 的更新自动运行 Windows 构建测试并上传 prerelease。
+只生成安装器、blockmap 和 latest.yml 发布文件；不再发布 ZIP。master 分支更新后自动运行 Windows 构建、NSIS 静默安装验证并发布预览版。
 
 用户配置与日志：%LOCALAPPDATA%\\CapsWriterLite\\settings.json、capswriter.log。

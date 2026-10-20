@@ -1,10 +1,8 @@
-# Windows 托盘语音输入新版（原版大模型常驻）
+# Windows EXE 安装版：CapsWriter Lite（原版大模型常驻）
 
-新增 [CapsWriter Lite v0.2.0](desktop/README.md)：保留原版 Paraformer + CT-Transformer 大模型，支持后台常驻、开机预加载、热词纠错记忆、Quicker 图形配置，并通过 GitHub Actions 自动编译 Windows EXE。模型仅需下载一次，也能直接使用现有 models 文件夹。
+新版改为和 CutPlayer 同类型的 Windows NSIS 安装包，支持自动检查更新、.blockmap 差分下载、更新失败回退完整包与断点续传。保留原版 Paraformer + CT-Transformer，模型和热词独立于安装目录，不需反复下载。
 
-**新版程序：** [Windows Release](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.2.0) · [详细使用说明](desktop/README.md)
-
-以下为旧版客户端、服务端和字幕转录介绍，旧版功能仍然保留。
+**直接下载 [CapsWriter-Lite-0.3.0-x64-Setup.exe](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.3.0) 安装**，不再要求解压 ZIP。旧版字幕工具仍保留。详见 [Windows 语音输入安装说明](desktop/README.md)。
 
 ---
 

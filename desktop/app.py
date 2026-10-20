@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import queue
 import re
+import subprocess
 import sys
 import threading
 import time
@@ -49,7 +50,7 @@ def set_run_at_login(enabled):
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, keyname, 0, winreg.KEY_SET_VALUE) as key:
         if enabled:
             # In source mode run the .pyw script through pythonw, not python.exe.
-            executable = Path(sys.executable)
+            executable = Path(os.environ.get("CAPSWRITER_LAUNCHER_EXE") or sys.executable)
             if getattr(sys, "frozen", False):
                 command = f'"{executable}" --background'
             else:
@@ -113,6 +114,8 @@ class VoiceApp:
                              lambda icon, item: self.events.put(("toggle", None))),
             pystray.MenuItem("纠正上次识别",
                              lambda icon, item: self.events.put(("manual", None))),
+            pystray.MenuItem("检查软件更新",
+                             lambda icon, item: self.events.put(("update", None))),
             pystray.MenuItem("打开日志",
                              lambda icon, item: self.events.put(("logs", None))),
             pystray.MenuItem("完全退出",
@@ -287,6 +290,19 @@ class VoiceApp:
             save_settings(self.settings)
             self._set_status(f"已记住热词：{old} → {new}")
 
+    def _check_updates(self):
+        launcher = os.environ.get("CAPSWRITER_LAUNCHER_EXE", "")
+        if not launcher or not Path(launcher).is_file():
+            messagebox.showinfo(APP_TITLE, "当前为便携或源码运行模式。请先安装 Windows Setup.exe 版本，才能使用差分自动更新。", parent=self.window or self.root)
+            return
+        try:
+            subprocess.Popen([launcher, "--check-for-updates"],
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                             close_fds=True)
+            self._set_status("正在检查更新…")
+        except OSError as exc:
+            self._emit("error", f"启动更新检查失败：{exc}")
+
     def _manual_correction(self):
         if not self.last_raw:
             messagebox.showinfo(APP_TITLE, "还没有语音识别结果", parent=self.window or self.root)
@@ -419,7 +435,9 @@ class VoiceApp:
         self.clipboard_enabled_var = tk.BooleanVar(value=self.settings["restore_clipboard"])
         ttk.Checkbutton(basic, text="输入后恢复原纯文本剪贴板",
                         variable=self.clipboard_enabled_var).pack(anchor="w", pady=6)
-        ttk.Label(basic, text="备注：后台常驻占用内存，关闭窗口不释放模型。"
+        ttk.Button(basic, text="检查软件更新（支持差分下载）",
+                   command=self._check_updates).pack(anchor="w", pady=(7, 0))
+        ttk.Label(basic, text="备注：后台常驻占用内存，关闭窗口不释放模型."
                   "\n仅点击右下角托盘的“完全退出”才退出。", justify="left",
                   foreground="#555").pack(anchor="w", pady=(18, 0))
 
@@ -500,6 +518,8 @@ class VoiceApp:
                 self.show_settings()
             elif kind == "manual":
                 self._manual_correction()
+            elif kind == "update":
+                self._check_updates()
             elif kind == "toggle":
                 self.enabled = not self.enabled
                 self._set_status("语音输入已启用" if self.enabled else "语音输入已暂停")

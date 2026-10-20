@@ -1,0 +1,63 @@
+{
+  "name": "capswriter-lite",
+  "version": "0.3.0",
+  "description": "Windows tray dictation using original CapsWriter offline models",
+  "author": "shandianchengzi",
+  "license": "MIT",
+  "main": "desktop/launcher/main.cjs",
+  "scripts": {
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "test:launcher": "node --test desktop/launcher/*.test.cjs"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "semver": "^7.7.0"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "io.github.shandianchengzi.capswriterlite",
+    "productName": "CapsWriter Lite",
+    "directories": {
+      "output": "release-dist"
+    },
+    "files": [
+      "desktop/launcher/*.cjs",
+      "package.json",
+      "!**/*.test.cjs"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/CapsWriterLite",
+        "to": "voice/CapsWriterLite",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "CapsWriter-Lite-${version}-${arch}-Setup.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "shandianchengzi",
+      "repo": "CapsWriter-Video2Srt-Offline"
+    },
+    "compression": "maximum"
+  }
+}

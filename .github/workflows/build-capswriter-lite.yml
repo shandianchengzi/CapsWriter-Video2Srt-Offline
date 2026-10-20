@@ -1,24 +1,32 @@
-name: Build CapsWriter Lite for Windows
+name: Windows installer and differential updates
 on:
   push:
     branches: [master]
     paths:
       - 'desktop/**'
+      - 'package.json'
       - '.github/workflows/build-capswriter-lite.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: capswriter-lite-windows-release
+  cancel-in-progress: false
+
 jobs:
-  build:
+  windows-installer:
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 65
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
@@ -26,65 +34,110 @@ jobs:
           cache: pip
           cache-dependency-path: desktop/requirements.txt
 
-      - name: Install dependencies
-        shell: pwsh
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r desktop/requirements.txt
 
-      - name: Verify source and logic tests
-        shell: pwsh
+      - name: Test Python source and logic
         run: |
           python -m compileall -q desktop
           $env:PYTHONPATH = "desktop"
           python -m unittest discover -s desktop/tests -v
+          if ($LASTEXITCODE -ne 0) { throw "Python tests failed" }
 
-      - name: Build tray application (model files excluded)
-        shell: pwsh
+      - name: Install electron-builder and updater
+        run: |
+          npm install --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw "NPM install failed" }
+          npm run test:launcher
+          if ($LASTEXITCODE -ne 0) { throw "Launcher tests failed" }
+
+      - name: Build resident voice engine without model weights
         run: |
           python -m PyInstaller --noconfirm --clean --onedir --windowed `
             --name CapsWriterLite `
             --icon assets/icon.ico `
             --paths desktop `
             --paths . `
-            --hidden-import util.chinese_itn `
-            --hidden-import util.format_tools `
             --collect-all sherpa_onnx `
             --collect-all funasr_onnx `
             --collect-all onnxruntime `
             --collect-all jieba `
             --collect-all uiautomation `
+            --hidden-import util.chinese_itn `
+            --hidden-import util.format_tools `
             --hidden-import kaldi_native_fbank `
             desktop/app.py
-          if (!(Test-Path dist/CapsWriterLite/CapsWriterLite.exe)) {
-            throw "Windows EXE was not produced"
-          }
+          if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
+          if (!(Test-Path dist/CapsWriterLite/CapsWriterLite.exe)) { throw "Voice engine missing" }
 
-      - name: Pack Windows executable
-        shell: pwsh
+      - name: Build NSIS setup and differential metadata
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
-          Compress-Archive -Path dist/CapsWriterLite -DestinationPath CapsWriterLite-v0.2.0-win64.zip -Force
+          npm run dist:win
+          if ($LASTEXITCODE -ne 0) { throw "electron-builder failed" }
+          $version = node -p "require('./package.json').version"
+          $installer = "release-dist/CapsWriter-Lite-$version-x64-Setup.exe"
+          $blockmap = "$installer.blockmap"
+          if (!(Test-Path $installer)) { throw "NSIS installer missing" }
+          if (!(Test-Path $blockmap)) { throw "NSIS blockmap missing" }
+          if (!(Test-Path release-dist/latest.yml)) { throw "Update feed missing" }
+          Write-Output "Installer: $((Get-Item $installer).Length) bytes"
+          Write-Output "Blockmap: $((Get-Item $blockmap).Length) bytes"
+          Get-Content release-dist/latest.yml
 
-      - name: Upload action artifact
+      - name: Validate real NSIS installation
+        run: |
+          $version = node -p "require('./package.json').version"
+          $installer = Join-Path $PWD "release-dist/CapsWriter-Lite-$version-x64-Setup.exe"
+          $destination = Join-Path $env:RUNNER_TEMP "capswriter-lite-installed"
+          $process = Start-Process -FilePath $installer -ArgumentList '/S',"/D=$destination" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "NSIS installation failed: $($process.ExitCode)" }
+          if (!(Test-Path "$destination/CapsWriter Lite.exe")) { throw "Installed launcher missing" }
+          if (!(Test-Path "$destination/resources/app-update.yml")) { throw "Updater configuration missing" }
+          if (!(Test-Path "$destination/resources/voice/CapsWriterLite/CapsWriterLite.exe")) {
+            throw "Embedded voice engine missing"
+          }
+          if (!(Test-Path "$destination/resources/app.asar")) { throw "Electron launcher missing" }
+          # The original model directory belongs to LOCALAPPDATA and must not be in NSIS.
+          if (Test-Path "$destination/resources/voice/CapsWriterLite/models") {
+            throw "Large model must not be bundled with the app"
+          }
+          Write-Output "NSIS install verified: $destination"
+
+      - name: Upload Windows build and blockmap
         uses: actions/upload-artifact@v4
         with:
-          name: CapsWriterLite-v0.2.0-win64
-          path: CapsWriterLite-v0.2.0-win64.zip
+          name: CapsWriter-Lite-Setup-v0.3.0
+          path: |
+            release-dist/*-Setup.exe
+            release-dist/*.blockmap
+            release-dist/latest.yml
           if-no-files-found: error
 
-      - name: Publish prerelease
+      - name: Publish installer release
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.2.0
+          tag_name: v0.3.0
           target_commitish: master
-          name: CapsWriter Lite v0.2.0 (Windows)
+          name: CapsWriter Lite v0.3.0 - Windows Installer
           prerelease: true
           make_latest: false
-          generate_release_notes: true
-          files: CapsWriterLite-v0.2.0-win64.zip
+          files: |
+            release-dist/*-Setup.exe
+            release-dist/*.blockmap
+            release-dist/latest.yml
           body: |
-            Windows 托盘语音输入（预览版），使用原版 Paraformer + CT-Transformer 大模型。
-            程序不包含模型。首次启动可直接选择旧版 models 文件夹，
-            或下载安装 Release 1 的原版模型包（约 1.18 GB）。
-            模型只在后台进程启动时加载一次，随后常驻内存。
+            Windows EXE 安装版，支持 NSIS 安装、托盘常驻、GitHub 自动更新和 blockmap 差分下载。
+            继续使用原版 Paraformer + CT-Transformer 大模型（不内置模型；下载一次后永久保留）。
+            首次从旧 v0.2.0 ZIP 版升级必须完整安装；后续安装版间可差分更新，
+            差分不可用时回退完整包，并支持断点续传。
+            模型、热词、Quicker 设置存放于 %LOCALAPPDATA%\CapsWriterLite，与安装目录分离。
