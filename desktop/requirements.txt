@@ -1,0 +1,16 @@
+# Windows Python 3.10. Full-sized model assets are intentionally not bundled.
+numpy==1.26.4
+sounddevice>=0.5.0,<0.6
+keyboard==0.13.5
+pyperclip>=1.9,<2
+pystray>=0.19.5,<0.20
+Pillow>=10,<12
+uiautomation>=2.0,<3
+websockets>=12,<13
+sherpa_onnx==1.8.11
+funasr_onnx==0.2.5
+typeguard==2.13.3
+kaldi-native-fbank==1.17
+jieba>=0.42
+onnxruntime>=1.17,<1.21
+pyinstaller>=6.10,<7
