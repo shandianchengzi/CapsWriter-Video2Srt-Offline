@@ -98,6 +98,20 @@ jobs:
           Write-Output "Blockmap: $((Get-Item $blockmap).Length) bytes"
           Get-Content release-dist/latest.yml
 
+      - name: Verify v0.3.0 to v0.3.1 differential reconstruction
+        run: |
+          $version = node -p "require('./package.json').version"
+          $old = "https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/download/v0.3.0/CapsWriter-Lite-0.3.0-x64-Setup.exe"
+          $previous = Join-Path $env:RUNNER_TEMP 'capswriter-previous.exe'
+          $map = Join-Path $env:RUNNER_TEMP 'capswriter-previous.blockmap'
+          Invoke-WebRequest $old -OutFile $previous
+          Invoke-WebRequest "$old.blockmap" -OutFile $map
+          node desktop/launcher/differential-benchmark.cjs $previous $map "release-dist/CapsWriter-Lite-$version-x64-Setup.exe" "release-dist/CapsWriter-Lite-$version-x64-Setup.exe.blockmap" "release-dist/update-performance.json"
+          if ($LASTEXITCODE -ne 0) { throw "Actual blockmap differential reconstruction failed" }
+          $metrics = Get-Content release-dist/update-performance.json | ConvertFrom-Json
+          if (!$metrics.sha512Verified) { throw "Differential output SHA-512 verification failed" }
+          Write-Output "Difference download: $($metrics.downloadPercent)% of full installer"
+
       - name: Validate real NSIS installation
         run: |
           $version = node -p "require('./package.json').version"
@@ -120,29 +134,31 @@ jobs:
       - name: Upload Windows build and blockmap
         uses: actions/upload-artifact@v4
         with:
-          name: CapsWriter-Lite-Setup-v0.3.0
+          name: CapsWriter-Lite-Setup-v0.3.1
           path: |
             release-dist/*-Setup.exe
             release-dist/*.blockmap
             release-dist/latest.yml
+            release-dist/update-performance.json
           if-no-files-found: error
 
       - name: Publish installer release
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.0
+          tag_name: v0.3.1
           target_commitish: master
-          name: CapsWriter Lite v0.3.0 - Windows Installer
-          prerelease: true
-          make_latest: false
+          name: CapsWriter Lite v0.3.1 - Windows Installer and Differential Update
+          prerelease: false
+          make_latest: true
           files: |
             release-dist/*-Setup.exe
             release-dist/*.blockmap
             release-dist/latest.yml
+            release-dist/update-performance.json
           body: |
             Windows EXE 安装版，支持 NSIS 安装、托盘常驻、GitHub 自动更新和 blockmap 差分下载。
             继续使用原版 Paraformer + CT-Transformer 大模型（不内置模型；下载一次后永久保留）。
-            首次从旧 v0.2.0 ZIP 版升级必须完整安装；后续安装版间可差分更新，
+            已通过 v0.3.0 -> v0.3.1 的实际 blockmap 差分重建和 SHA-512 验证。\n            首次从旧 v0.2.0 ZIP 版升级必须完整安装；后续安装版间可差分更新，
             差分不可用时回退完整包，并支持断点续传。
             模型、热词、Quicker 设置存放于 %LOCALAPPDATA%\CapsWriterLite，与安装目录分离。

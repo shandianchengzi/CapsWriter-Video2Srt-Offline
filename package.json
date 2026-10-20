@@ -1,6 +1,6 @@
 {
   "name": "capswriter-lite",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Windows tray dictation using original CapsWriter offline models",
   "author": "shandianchengzi",
   "license": "MIT",
@@ -26,7 +26,8 @@
     "files": [
       "desktop/launcher/*.cjs",
       "package.json",
-      "!**/*.test.cjs"
+      "!**/*.test.cjs",
+      "!desktop/launcher/differential-benchmark.cjs"
     ],
     "extraResources": [
       {

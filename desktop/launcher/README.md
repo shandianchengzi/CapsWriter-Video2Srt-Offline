@@ -16,9 +16,11 @@ CapsWriter Lite uses the same Windows distribution architecture as Cut Player:
 - User settings and model weights stay in %LOCALAPPDATA%\CapsWriterLite, never in
   the installation tree. Uninstall does not delete this directory.
 
-The previous v0.2.0 was ZIP-only without a blockmap, so v0.3.0 is the first installed
+The previous v0.2.0 was ZIP-only without a blockmap, so v0.3.1 is the first installed
 baseline; subsequent installer versions can actually download delta blocks.
 
 Development notes: the Electron main process is intentionally windowless to avoid a
 second, duplicate GUI. Source code runs can still invoke desktop/app.py directly,
 but automatic NSIS updates are only available from installed Setup.exe versions.
+
+CI verifies actual installer differential reconstruction between v0.3.0 and v0.3.1 using the same generic differential downloader implementation as Cut Player; this validates downloaded blocks and SHA-512 equality, not a live user's network conditions.

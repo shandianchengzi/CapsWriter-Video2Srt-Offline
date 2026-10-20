@@ -2,7 +2,7 @@
 
 新版改为和 CutPlayer 同类型的 Windows NSIS 安装包，支持自动检查更新、.blockmap 差分下载、更新失败回退完整包与断点续传。保留原版 Paraformer + CT-Transformer，模型和热词独立于安装目录，不需反复下载。
 
-**直接下载 [CapsWriter-Lite-0.3.0-x64-Setup.exe](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.3.0) 安装**，不再要求解压 ZIP。旧版字幕工具仍保留。详见 [Windows 语音输入安装说明](desktop/README.md)。
+**直接下载 [CapsWriter-Lite-0.3.1-x64-Setup.exe](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.3.1) 安装**，不再要求解压 ZIP。旧版字幕工具仍保留。详见 [Windows 语音输入安装说明](desktop/README.md)。
 
 ---
 

@@ -94,6 +94,8 @@ function createUpdater() {
   const {autoUpdater}=require('electron-updater');
   updater=autoUpdater;
   updater.autoDownload=false;
+  // Include published prerelease update metadata from the v0.3.0 installer baseline.
+  updater.allowPrerelease=true;
   updater.autoInstallOnAppQuit=false;
   updater.disableDifferentialDownload=false;
   updater.disableWebInstaller=true;
