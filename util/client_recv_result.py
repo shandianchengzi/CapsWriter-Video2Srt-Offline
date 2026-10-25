@@ -37,7 +37,8 @@ async def recv_result():
             file_audio = rename_audio(message['task_id'], text, message['time_start'])
 
             # 记录写入 md 文件
-            write_md(text, message['time_start'], file_audio)
+            if getattr(Config, "save_text", True):
+                write_md(text, message['time_start'], file_audio)
 
             # 控制台输出
             console.print(f'    转录时延：{delay:.2f}s')

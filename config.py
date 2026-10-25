@@ -70,3 +70,54 @@ class ParaformerArgs:
     debug = False
 
 
+
+
+# Windows desktop Settings bridge. Existing source installs without a settings file
+# keep the original defaults. Only explicitly supported legacy fields are mapped.
+# This file is loaded by the legacy client/server; the new tray reads the same JSON.
+def _load_windows_desktop_overrides():
+    import json
+    import os
+    import sys
+    if sys.platform != "win32":
+        return
+    settings_file = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "CapsWriterLite" / "settings.json"
+    try:
+        values = json.loads(settings_file.read_text(encoding="utf-8"))
+        if not isinstance(values, dict):
+            return
+    except (OSError, ValueError):
+        return
+    client_mapping = {
+        "client_addr": "addr", "client_port": "port",
+        "hold_mode": "hold_mode", "suppress": "suppress",
+        "restore_key": "restore_key", "threshold": "threshold",
+        "paste": "paste", "restore_clipboard": "restore_clip",
+        "save_audio": "save_audio", "save_text": "save_text",
+        "record_dir": "record_dir", "audio_name_len": "audio_name_len",
+        "trash_punc": "trash_punc",
+        "hot_zh": "hot_zh", "hot_en": "hot_en", "hot_rule": "hot_rule",
+        "hot_kwd": "hot_kwd",
+        "heteronym": "多音字", "tone": "声调",
+        "mic_seg_duration": "mic_seg_duration", "mic_seg_overlap": "mic_seg_overlap",
+        "file_seg_duration": "file_seg_duration", "file_seg_overlap": "file_seg_overlap",
+        "quicker_host": "QUICKER_HOST", "quicker_port": "QUICKER_PORT",
+    }
+    for source, field in client_mapping.items():
+        if source in values:
+            setattr(ClientConfig, field, values[source])
+    if values.get("quicker_password"):
+        ClientConfig.QUICKER_PASSWORD = values["quicker_password"]
+    # Legacy keyboard hook accepts a single key, unlike the new chord parser.
+    if values.get("shortcut") and "+" not in values["shortcut"]:
+        ClientConfig.shortcut = values["shortcut"]
+    for source, field in {"server_addr": "addr", "server_port": "port",
+                          "format_num": "format_num", "format_punc": "format_punc",
+                          "format_spell": "format_spell"}.items():
+        if source in values:
+            setattr(ServerConfig, field, values[source])
+
+
+ClientConfig.save_text = True  # Preserve old default when no new settings exist.
+ClientConfig.record_dir = str(Path())
+_load_windows_desktop_overrides()

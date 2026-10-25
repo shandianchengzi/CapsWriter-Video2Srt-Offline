@@ -1,8 +1,8 @@
 # Windows EXE 安装版：CapsWriter Lite（原版大模型常驻）
 
-新版改为和 CutPlayer 同类型的 Windows NSIS 安装包，支持自动检查更新、.blockmap 差分下载、更新失败回退完整包与断点续传。保留原版 Paraformer + CT-Transformer，模型和热词独立于安装目录，不需反复下载。
+新版与 CutPlayer 同类型的 Windows NSIS 安装包，支持自动检查更新、.blockmap 差分下载、更新失败回退完整包与断点续传。保留原版 Paraformer + CT-Transformer。v0.3.2 新增图形界面内设置录音快捷键、长按/单击、录音和转录文本是否本地保存、保存目录、尾部标点、格式化和分段，以及直接查看/编辑原本 hot-zh.txt、hot-en.txt、hot-rule.txt、keywords.txt 的所有热词。
 
-**直接下载 [CapsWriter-Lite-0.3.1-x64-Setup.exe](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.3.1) 安装**，不再要求解压 ZIP。旧版字幕工具仍保留。详见 [Windows 语音输入安装说明](desktop/README.md)。
+**直接下载 [CapsWriter-Lite-0.3.2-x64-Setup.exe](https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/tag/v0.3.2) 安装**，不再要求解压 ZIP。旧版字幕工具仍保留。详见 [Windows 语音输入安装说明](desktop/README.md)。
 
 ---
 

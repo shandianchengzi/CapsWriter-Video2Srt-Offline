@@ -15,7 +15,8 @@ def create_file(channels: int, time_start: float) -> Tuple[Path, Union[Popen, Wa
     time_month = time.strftime('%m', time.localtime(time_start))
     time_ymdhms = time.strftime("%Y%m%d-%H%M%S", time.localtime(time_start))
 
-    folder_path = Path() / time_year / time_month / 'assets'
+    from config import ClientConfig as Config
+    folder_path = Path(Config.record_dir).expanduser() / time_year / time_month / 'assets'
     makedirs(folder_path, exist_ok=True)
     file_path = tempfile.mktemp(prefix=f'({time_ymdhms})', dir=folder_path)
     file_path = Path(file_path)

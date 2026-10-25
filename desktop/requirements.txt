@@ -12,5 +12,6 @@ funasr_onnx==0.2.5
 typeguard==2.13.3
 kaldi-native-fbank==1.17
 jieba>=0.42
+pypinyin>=0.55,<0.56
 onnxruntime>=1.17,<1.21
 pyinstaller>=6.10,<7

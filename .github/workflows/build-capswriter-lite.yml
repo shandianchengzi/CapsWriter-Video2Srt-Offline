@@ -70,6 +70,11 @@ jobs:
             --collect-all onnxruntime `
             --collect-all jieba `
             --collect-all uiautomation `
+            --collect-all pypinyin `
+            --add-data "hot-zh.txt;legacy" `
+            --add-data "hot-en.txt;legacy" `
+            --add-data "hot-rule.txt;legacy" `
+            --add-data "keywords.txt;legacy" `
             --hidden-import util.chinese_itn `
             --hidden-import util.format_tools `
             --hidden-import kaldi_native_fbank `
@@ -98,10 +103,10 @@ jobs:
           Write-Output "Blockmap: $((Get-Item $blockmap).Length) bytes"
           Get-Content release-dist/latest.yml
 
-      - name: Verify v0.3.0 to v0.3.1 differential reconstruction
+      - name: Verify v0.3.1 to v0.3.2 differential reconstruction
         run: |
           $version = node -p "require('./package.json').version"
-          $old = "https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/download/v0.3.0/CapsWriter-Lite-0.3.0-x64-Setup.exe"
+          $old = "https://github.com/shandianchengzi/CapsWriter-Video2Srt-Offline/releases/download/v0.3.1/CapsWriter-Lite-0.3.1-x64-Setup.exe"
           $previous = Join-Path $env:RUNNER_TEMP 'capswriter-previous.exe'
           $map = Join-Path $env:RUNNER_TEMP 'capswriter-previous.blockmap'
           Invoke-WebRequest $old -OutFile $previous
@@ -134,7 +139,7 @@ jobs:
       - name: Upload Windows build and blockmap
         uses: actions/upload-artifact@v4
         with:
-          name: CapsWriter-Lite-Setup-v0.3.1
+          name: CapsWriter-Lite-Setup-v0.3.2
           path: |
             release-dist/*-Setup.exe
             release-dist/*.blockmap
@@ -146,9 +151,9 @@ jobs:
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.1
+          tag_name: v0.3.2
           target_commitish: master
-          name: CapsWriter Lite v0.3.1 - Windows Installer and Differential Update
+          name: CapsWriter Lite v0.3.2 - Windows Installer and Differential Update
           prerelease: false
           make_latest: true
           files: |
@@ -159,6 +164,6 @@ jobs:
           body: |
             Windows EXE 安装版，支持 NSIS 安装、托盘常驻、GitHub 自动更新和 blockmap 差分下载。
             继续使用原版 Paraformer + CT-Transformer 大模型（不内置模型；下载一次后永久保留）。
-            已通过 v0.3.0 -> v0.3.1 的实际 blockmap 差分重建和 SHA-512 验证。\n            首次从旧 v0.2.0 ZIP 版升级必须完整安装；后续安装版间可差分更新，
+            新增 UI 快捷键、录音/文字保存、旧版词库管理，使用 v0.3.1 -> v0.3.2 差分验证。\n            首次从旧 v0.2.0 ZIP 版升级必须完整安装；后续安装版间可差分更新，
             差分不可用时回退完整包，并支持断点续传。
             模型、热词、Quicker 设置存放于 %LOCALAPPDATA%\CapsWriterLite，与安装目录分离。

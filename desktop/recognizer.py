@@ -11,7 +11,7 @@ from util.format_tools import adjust_space
 
 
 class FullRecognizer:
-    def __init__(self, directory, progress=lambda status: None):
+    def __init__(self, directory, progress=lambda status: None, num_threads=4):
         directory = Path(directory)
         self._lock = threading.Lock()
         progress("正在初始化原版 Paraformer 大模型…")
@@ -19,7 +19,7 @@ class FullRecognizer:
         self.asr = sherpa_onnx.OfflineRecognizer.from_paraformer(
             paraformer=str(directory / "paraformer-offline-zh" / "model.int8.onnx"),
             tokens=str(directory / "paraformer-offline-zh" / "tokens.txt"),
-            num_threads=4,
+            num_threads=num_threads,
             sample_rate=16000,
             feature_dim=80,
             decoding_method="greedy_search",
@@ -36,15 +36,16 @@ class FullRecognizer:
         self.asr.decode_stream(stream)
         return list(stream.result.tokens), list(stream.result.timestamps)
 
-    def transcribe(self, audio):
+    def transcribe(self, audio, settings=None):
         """Keep recognizers resident; split long dictation with overlap and timestamp trim."""
         with self._lock:
             samples = np.asarray(audio, dtype=np.float32).reshape(-1)
             if samples.size < 4800:
                 return ""
             sample_rate = 16000
-            segment_samples = 25 * sample_rate
-            overlap_samples = 2 * sample_rate
+            settings = settings or {}
+            segment_samples = int(settings.get("mic_seg_duration", 25)) * sample_rate
+            overlap_samples = int(settings.get("mic_seg_overlap", 2)) * sample_rate
             stride = segment_samples - overlap_samples
             merged = []
             for start in range(0, len(samples), stride):
@@ -72,8 +73,12 @@ class FullRecognizer:
             if not text:
                 return ""
             # Keep the existing original server's format pipeline.
-            text = adjust_space(text)
-            text = self.punc(text)[0]
-            text = chinese_to_num(text)
-            text = adjust_space(text)
+            if settings.get("format_spell", True):
+                text = adjust_space(text)
+            if settings.get("format_punc", True):
+                text = self.punc(text)[0]
+            if settings.get("format_num", True):
+                text = chinese_to_num(text)
+            if settings.get("format_spell", True):
+                text = adjust_space(text)
             return text.strip()
